@@ -1,4 +1,5 @@
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { roomsArr } from './Scripts';
 
 const SelectComponent = ({ title, value, func, items }) => {
   return (
@@ -12,7 +13,7 @@ const SelectComponent = ({ title, value, func, items }) => {
         onChange={(event) => func(event.target.value)}>
         {items.map((item) => (
           <MenuItem key={item} value={item}>
-            {item}
+            {items === roomsArr ? `Переговорная №${item}` : item}
           </MenuItem>
         ))}
       </Select>

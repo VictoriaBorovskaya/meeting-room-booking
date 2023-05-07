@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SelectComponent from 'components/SelectComponent';
-import TextField from '@mui/material/TextField';
-// import { add, set } from 'date-fns';
-import Button from '@mui/material/Button';
+import Modal from 'components/Modal';
+import ButtonComponent from 'components/ButtonComponent';
 import DatePickerComponent from 'components/DatePickerComponent';
 import TimePickerComponent from 'components/TimePickerComponent';
+import { FormSection, TimeContainer } from 'components/StyledComponents';
+import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
-import { FormSection, TimeContainer, ButtonContainer } from 'components/StyledComponents';
 import {
   towersArr,
   floorArr,
@@ -26,13 +26,21 @@ const Form = () => {
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [comment, setComment] = useState('');
-  const [isOpen, setOpen] = useState(false);
+  const [isTimeError, setTimeError] = useState(false);
+  const [isItemError, setItemError] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookings, setBookings] = useState(
+    localStorage.getItem('bookings') ? JSON.parse(localStorage.getItem('bookings')) : [],
+  );
+
+  useEffect(() => {
+    localStorage.setItem('bookings', JSON.stringify(bookings));
+  }, [bookings]);
 
   const handleClick = (event) => {
     event.preventDefault();
     if (startTime >= endTime || startTime === null) {
-      console.log('Неверно введено время');
-      setOpen(true);
+      setTimeError(true);
     } else {
       const item = {
         tower,
@@ -43,9 +51,28 @@ const Form = () => {
         endTime,
         comment,
       };
-      let json = JSON.stringify(item);
-      console.log(json);
-      clearForm();
+      //этот фильтр проще написать с использованием lodash :(
+      const bookingsFilter = bookings.filter(
+        (elem) =>
+          (elem.room === item.room) &
+          (elem.tower === item.tower) &
+          (elem.floor === item.floor) &
+          (elem.startDate === item.startDate) &
+          ((item.startTime >= elem.startTime) & (elem.endTime >= item.startTime) ||
+            (item.endTime >= elem.startTime) & (elem.endTime >= item.endTime) ||
+            (elem.startTime >= item.startTime) & (item.endTime >= elem.endTime) ||
+            (item.startTime >= elem.startTime) & (elem.endTime >= item.endTime)),
+      );
+
+      if (bookingsFilter.length === 0) {
+        setBookings([item, ...bookings]);
+        let json = JSON.stringify(item);
+        console.log(json);
+        setIsBooking(true);
+      } else {
+        setItemError(true);
+        setTimeError(false);
+      }
     }
   };
 
@@ -57,7 +84,8 @@ const Form = () => {
     setStartTime(null);
     setEndTime(null);
     setComment('');
-    setOpen(false);
+    setTimeError(false);
+    setItemError(false);
   };
 
   return (
@@ -90,15 +118,22 @@ const Form = () => {
         value={comment}
         onChange={(event) => setComment(event.target.value)}
       />
-      {isOpen && <Alert severity="error">Некорректно указано время бронирования</Alert>}
-      <ButtonContainer>
-        <Button variant="contained" size="large" fullWidth type="submit">
-          Отправить
-        </Button>
-        <Button variant="contained" size="large" onClick={() => clearForm()} fullWidth>
-          Очистить
-        </Button>
-      </ButtonContainer>
+      {isTimeError && <Alert severity="error">Некорректно указано время бронирования</Alert>}
+      {isItemError && <Alert severity="error">Выбранная переговорная уже забронирована</Alert>}
+      {bookings.length > 0 && (
+        <Modal
+          isBooking={isBooking}
+          setIsBooking={setIsBooking}
+          clearForm={clearForm}
+          tower={tower}
+          floor={floor}
+          room={room}
+          startDate={startDate}
+          startTime={startTime}
+          endTime={endTime}
+        />
+      )}
+      <ButtonComponent clearForm={clearForm} />
     </FormSection>
   );
 };
