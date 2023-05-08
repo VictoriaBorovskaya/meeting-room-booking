@@ -7,18 +7,11 @@ import TimePickerComponent from 'components/TimePickerComponent';
 import { FormSection, TimeContainer } from 'components/StyledComponents';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
-import {
-  towersArr,
-  floorArr,
-  roomsArr,
-  today,
-  minTimeStart,
-  maxTimeStart,
-  minTimeEnd,
-  maxTimeEnd,
-} from './Scripts';
+import { formatISO9075 } from 'date-fns';
+import { towersArr, floorArr, roomsArr, today, minTimeStart, maxTimeStart, minTimeEnd, maxTimeEnd } from './Scripts';
 
 const Form = () => {
+  // очень много state для формы, можно решить проблему с помощью react final form
   const [tower, setTower] = useState('');
   const [floor, setFloor] = useState('');
   const [room, setRoom] = useState('');
@@ -39,7 +32,14 @@ const Form = () => {
 
   const handleClick = (event) => {
     event.preventDefault();
-    if (startTime >= endTime || startTime === null) {
+    if (
+      startTime >= endTime ||
+      startTime === null ||
+      formatISO9075(startTime, { representation: 'time' }) >
+        formatISO9075(new Date(maxTimeStart), { representation: 'time' }) ||
+      formatISO9075(endTime, { representation: 'time' }) >
+        formatISO9075(new Date(maxTimeEnd), { representation: 'time' })
+    ) {
       setTimeError(true);
     } else {
       const item = {
@@ -69,6 +69,8 @@ const Form = () => {
         let json = JSON.stringify(item);
         console.log(json);
         setIsBooking(true);
+        setItemError(false);
+        setTimeError(false);
       } else {
         setItemError(true);
         setTimeError(false);
@@ -93,7 +95,7 @@ const Form = () => {
       <SelectComponent title={'Башня'} value={tower} func={setTower} items={towersArr} />
       <SelectComponent title={'Этаж'} value={floor} func={setFloor} items={floorArr} />
       <SelectComponent title={'Переговорная'} value={room} func={setRoom} items={roomsArr} />
-      <DatePickerComponent today={today} startDate={startDate} setStartDate={setStartDate} />
+      <DatePickerComponent startDate={startDate} setStartDate={setStartDate} />
       <TimeContainer>
         <TimePickerComponent
           title="Начало"
