@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/meeting-room-booking/static/css/main.6ec24078.css",
+    "main.js": "/meeting-room-booking/static/js/main.bb30e5cb.js",
+    "index.html": "/meeting-room-booking/index.html",
+    "main.6ec24078.css.map": "/meeting-room-booking/static/css/main.6ec24078.css.map",
+    "main.bb30e5cb.js.map": "/meeting-room-booking/static/js/main.bb30e5cb.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6ec24078.css",
+    "static/js/main.bb30e5cb.js"
+  ]
+}
