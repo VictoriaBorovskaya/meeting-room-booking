@@ -22,6 +22,15 @@ const Form = () => {
   const [isTimeError, setTimeError] = useState(false);
   const [isItemError, setItemError] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+
+  //для валидации формы
+  const [error, setError] = useState({
+    towerError: false,
+    floorError: false,
+    roomError: false,
+  });
+
+  // для хранения забронированных переговорок
   const [bookings, setBookings] = useState(
     localStorage.getItem('bookings') ? JSON.parse(localStorage.getItem('bookings')) : [],
   );
@@ -32,48 +41,60 @@ const Form = () => {
 
   const handleClick = (event) => {
     event.preventDefault();
-    if (
-      startTime >= endTime ||
-      startTime === null ||
-      formatISO9075(startTime, { representation: 'time' }) >
-        formatISO9075(new Date(maxTimeStart), { representation: 'time' }) ||
-      formatISO9075(endTime, { representation: 'time' }) >
-        formatISO9075(new Date(maxTimeEnd), { representation: 'time' })
-    ) {
-      setTimeError(true);
-    } else {
-      const item = {
-        tower,
-        floor,
-        room,
-        startDate,
-        startTime,
-        endTime,
-        comment,
-      };
-      //этот фильтр проще написать с использованием lodash :(
-      const bookingsFilter = bookings.filter(
-        (elem) =>
-          (elem.room === item.room) &
-          (elem.tower === item.tower) &
-          (elem.floor === item.floor) &
-          (elem.startDate === item.startDate) &
-          ((item.startTime >= elem.startTime) & (elem.endTime >= item.startTime) ||
-            (item.endTime >= elem.startTime) & (elem.endTime >= item.endTime) ||
-            (elem.startTime >= item.startTime) & (item.endTime >= elem.endTime) ||
-            (item.startTime >= elem.startTime) & (elem.endTime >= item.endTime)),
-      );
+    const item = {
+      tower,
+      floor,
+      room,
+      startDate: startDate === today ? today : startDate.getTime(),
+      startTime,
+      endTime,
+      comment,
+    };
 
-      if (bookingsFilter.length === 0) {
-        setBookings([item, ...bookings]);
-        let json = JSON.stringify(item);
-        console.log(json);
-        setIsBooking(true);
+    if (tower === '') {
+      setError({ ...error, towerError: true, floorError: false, roomError: false });
+    } else if (floor === '') {
+      setError({ ...error, floorError: true, towerError: false, roomError: false });
+    } else if (room === '') {
+      setError({ ...error, roomError: true, floorError: false, towerError: false });
+    } else {
+      if (
+        startTime >= endTime ||
+        startTime === null ||
+        endTime === null ||
+        formatISO9075(startTime, { representation: 'time' }) >
+          formatISO9075(new Date(maxTimeStart), { representation: 'time' }) ||
+        formatISO9075(endTime, { representation: 'time' }) >
+          formatISO9075(new Date(maxTimeEnd), { representation: 'time' })
+      ) {
+        setTimeError(true);
         setItemError(false);
-        setTimeError(false);
       } else {
-        setItemError(true);
-        setTimeError(false);
+        setError({ ...error, towerError: false, floorError: false, roomError: false });
+        //этот фильтр проще написать с использованием lodash :(
+        const bookingsFilter = bookings.filter(
+          (elem) =>
+            (elem.room === item.room) &
+            (elem.tower === item.tower) &
+            (elem.floor === item.floor) &
+            (elem.startDate === item.startDate) &
+            ((item.startTime >= elem.startTime) & (elem.endTime >= item.startTime) ||
+              (item.endTime >= elem.startTime) & (elem.endTime >= item.endTime) ||
+              (elem.startTime >= item.startTime) & (item.endTime >= elem.endTime) ||
+              (item.startTime >= elem.startTime) & (elem.endTime >= item.endTime)),
+        );
+
+        if (bookingsFilter.length === 0) {
+          setBookings([item, ...bookings]);
+          let json = JSON.stringify(item);
+          console.log(json);
+          setIsBooking(true);
+          setItemError(false);
+          setTimeError(false);
+        } else {
+          setItemError(true);
+          setTimeError(false);
+        }
       }
     }
   };
@@ -92,9 +113,9 @@ const Form = () => {
 
   return (
     <FormSection onSubmit={(event) => handleClick(event)}>
-      <SelectComponent title={'Башня'} value={tower} func={setTower} items={towersArr} />
-      <SelectComponent title={'Этаж'} value={floor} func={setFloor} items={floorArr} />
-      <SelectComponent title={'Переговорная'} value={room} func={setRoom} items={roomsArr} />
+      <SelectComponent title={'Башня'} value={tower} func={setTower} items={towersArr} error={error.towerError} />
+      <SelectComponent title={'Этаж'} value={floor} func={setFloor} items={floorArr} error={error.floorError} />
+      <SelectComponent title={'Переговорная'} value={room} func={setRoom} items={roomsArr} error={error.roomError} />
       <DatePickerComponent startDate={startDate} setStartDate={setStartDate} />
       <TimeContainer>
         <TimePickerComponent

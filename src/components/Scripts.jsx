@@ -14,3 +14,5 @@ export const minTimeStart = date.setHours(9, 0, 0, 0);
 export const maxTimeStart = date.setHours(17, 0, 0, 0);
 export const minTimeEnd = date.setHours(10, 0, 0, 0);
 export const maxTimeEnd = date.setHours(18, 0, 0, 0);
+
+// export const today = new Date(date.setDate(date.getDate() + 1)).toString();
